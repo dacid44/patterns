@@ -40,8 +40,8 @@ while True:
                     else:
                         new_point = Point(*pos, canvas)
                         old_line = canvas.get_line(valid[0], valid[1])
-                        line1 = valid[0].new_line(new_point)[1]
-                        line2 = valid[1].new_line(new_point)[1]
+                        line1 = canvas.get_line(valid[0], new_point)
+                        line2 = canvas.get_line(valid[1], new_point)
                         Shape((old_line, line1, line2), canvas)
                         break
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == pygame.BUTTON_RIGHT:
@@ -75,8 +75,8 @@ while True:
     canvas.display.fill(colors['white'])
     for shape in canvas['shapes']:
         points = list(map(lambda x: x.get_pos(), shape.get_points()))
-        gfxdraw.aapolygon(canvas.display, points, colors['green'])
-        gfxdraw.filled_polygon(canvas.display, points, colors['green'])
+        gfxdraw.aapolygon(canvas.display, points, shape.get_color())
+        gfxdraw.filled_polygon(canvas.display, points, shape.get_color())
     for line in canvas['lines']:
         points = list(map(lambda x: x.get_pos(), line.get_points()))
         pygame.draw.aaline(canvas.display, colors['black'], *points, 1)

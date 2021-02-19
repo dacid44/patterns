@@ -1,4 +1,5 @@
 import math
+from random import randint
 from typing import Union, List, Collection
 
 import shapely.geometry
@@ -96,7 +97,7 @@ class Canvas:
         points = {p1, p2}
         line = None
         for test_line in self['lines']:
-            if test_line.get_points == points:
+            if test_line.get_points() == points:
                 line = test_line
                 break
         if line is None:
@@ -155,9 +156,16 @@ class Line:
         self.canvas = canvas
         self.canvas.add_line(self)
         self.obj = shapely.geometry.LineString((p1.get_pos(), p2.get_pos()))
+        self.shapes = set()
+
+    def add_shape(self, shape):
+        self.shapes.add(shape)
 
     def get_points(self, raw=False):
         return set(map(lambda x: x.get_pos(), self.points)) if raw else self.points
+
+    def get_shapes(self):
+        return self.shapes
 
     def __eq__(self, other):
         return self.points == other.points
@@ -168,10 +176,19 @@ class Line:
 
 class Shape:
     def __init__(self, sides: Collection[Line], canvas):
-        self.sides = set(sides)
+        self.sides = frozenset(sides)
         self.canvas = canvas
         self.canvas.add_shape(self)
+        for side in self.sides:
+            side.add_shape(self)
         self.obj = shapely.geometry.Polygon(map(lambda x: x.get_pos(), self.get_points()))
+        self.color = [randint(0, 255), randint(0, 255), randint(0, 255)]
+        neighbors = self.get_neighbors()
+        for neighbor in neighbors:
+            for i in range(3):
+                self.color[i] += neighbor.get_color()[i] * 2.5
+        for i in range(3):
+            self.color[i] = int(self.color[i] / (len(neighbors) * 2.5 + 1))
 
     def get_sides(self):
         return self.sides
@@ -182,3 +199,20 @@ class Shape:
             for point in side.get_points():
                 points.add(point.get_pos() if raw else point)
         return points
+
+    def get_neighbors(self):
+        neighbors = set()
+        for side in self.sides:
+            for shape in side.get_shapes():
+                if shape != self:
+                    neighbors.add(shape)
+        return neighbors
+
+    def get_color(self):
+        return self.color
+
+    def __eq__(self, other):
+        return self.sides == other.sides
+
+    def __hash__(self):
+        return hash(self.sides)
