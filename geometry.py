@@ -65,7 +65,7 @@ class Canvas:
         line = set(map(lambda x: x.get_pos(), line.get_points())) if type(line) is Line else set(line)
         for cand_line in self['lines']:
             if cand_line.get_points(raw=True).isdisjoint(line) and \
-                    shapely.geometry.LineString(list(line)).intersects(cand_line.obj):
+                    shapely.geometry.LineString(self.point_list(line)).intersects(cand_line.obj):
                 return True
         return False
 
@@ -79,6 +79,13 @@ class Canvas:
         if line is None:
             line = p1.new_line(p2)[1]
         return line
+
+    @staticmethod
+    def point_list(set_from):
+        to_return = list(set_from)
+        if len(to_return) < 2:
+            to_return.append(to_return[0])
+        return to_return
 
 
 class Point:
