@@ -32,17 +32,42 @@ while True:
             pos = event.pos
             closest = canvas.get_closest(pos)
             valid = list(filter(lambda x: not canvas.would_cross([x.get_pos(), pos]), closest))
-            if len(valid) >= 2 and not canvas.point_exists(pos) and not canvas.is_in_any_triangle(pos) and not \
+            if not canvas.point_exists(pos) and not canvas.is_in_any_triangle(pos) and not \
                     canvas.would_cross([valid[0].get_pos(), valid[1].get_pos()]):
-                new_point = Point(*pos, canvas)
-                old_line = canvas.get_line(valid[0], valid[1])
-                line1 = valid[0].new_line(new_point)[1]
-                line2 = valid[1].new_line(new_point)[1]
-                Shape((old_line, line1, line2), canvas)
+                while len(valid) >= 2:
+                    if not canvas.line_exists(set(valid[:2])):
+                        valid.pop(1)
+                    else:
+                        new_point = Point(*pos, canvas)
+                        old_line = canvas.get_line(valid[0], valid[1])
+                        line1 = valid[0].new_line(new_point)[1]
+                        line2 = valid[1].new_line(new_point)[1]
+                        Shape((old_line, line1, line2), canvas)
+                        break
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == pygame.BUTTON_RIGHT:
             pos = event.pos
-            closest = canvas.get_closest(pos)
-            valid = list(filter(lambda x: not canvas.would_cross([x.get_pos(), pos]), closest))
+            if not canvas.point_exists(pos) and not canvas.is_in_any_triangle(pos):
+                closest = canvas.get_closest(pos)
+                valid = list(filter(lambda x: not canvas.would_cross([x.get_pos(), pos]), closest))
+                while len(valid) >= 3:
+                    test_lines = [
+                        [valid[0].get_pos(), valid[1].get_pos()],
+                        [valid[1].get_pos(), valid[2].get_pos()],
+                        [valid[0].get_pos(), valid[1].get_pos()]
+                    ]
+                    skip = False
+                    for i in range(3):
+                        if canvas.would_cross_lines([valid[i].get_pos(), pos], test_lines) or not \
+                                canvas.is_inside(pos, map(lambda x: x.get_pos(), valid[:3])):
+                            valid.pop(i)
+                            skip = True
+                            break
+                    if not skip:
+                        line1 = canvas.get_line(valid[0], valid[1])
+                        line2 = canvas.get_line(valid[1], valid[2])
+                        line3 = canvas.get_line(valid[0], valid[2])
+                        Shape((line1, line2, line3), canvas)
+                        break
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
             canvas.clear()
             Point(size[0] // 2 - 50, size[1] // 2, canvas).new_line((size[0] // 2 + 50, size[1] // 2))

@@ -61,6 +61,14 @@ class Canvas:
                 return True
         return False
 
+    def line_exists(self, line: Union['Line', Collection['Point']]):
+        if type(line) is Line:
+            line = line.get_points()
+        for test_line in self['lines']:
+            if test_line.get_points() == line:
+                return True
+        return False
+
     def would_cross(self, line: Union['Line', Collection[Collection[Union[int, float]]]]):
         line = set(map(lambda x: x.get_pos(), line.get_points())) if type(line) is Line else set(line)
         for cand_line in self['lines']:
@@ -68,6 +76,21 @@ class Canvas:
                     shapely.geometry.LineString(self.point_list(line)).intersects(cand_line.obj):
                 return True
         return False
+
+    @classmethod
+    def would_cross_lines(cls, line, test_lines):
+        line_obj = shapely.geometry.LineString(cls.point_list(line))
+        line = set(line)
+        for test_line in test_lines:
+            if line.isdisjoint(set(test_line)) and \
+                    shapely.geometry.LineString(cls.point_list(test_line)).intersects(line_obj):
+                return True
+        return False
+
+    @classmethod
+    def is_inside(cls, point, test_points):
+        points_obj = shapely.geometry.Polygon(cls.point_list(test_points, 3))
+        return points_obj.contains(shapely.geometry.Point(point))
 
     def get_line(self, p1: 'Point', p2: 'Point'):
         points = {p1, p2}
@@ -81,10 +104,10 @@ class Canvas:
         return line
 
     @staticmethod
-    def point_list(set_from):
-        to_return = list(set_from)
-        if len(to_return) < 2:
-            to_return.append(to_return[0])
+    def point_list(from_obj, size=2):
+        to_return = list(from_obj)
+        while len(to_return) < size:
+            to_return.append(to_return[-1])
         return to_return
 
 
