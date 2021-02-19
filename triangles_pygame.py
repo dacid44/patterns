@@ -57,11 +57,13 @@ while True:
                     ]
                     skip = False
                     for i in range(3):
-                        if canvas.would_cross_lines([valid[i].get_pos(), pos], test_lines) or not \
-                                canvas.is_inside(pos, map(lambda x: x.get_pos(), valid[:3])):
+                        if canvas.would_cross_lines([valid[i].get_pos(), pos], test_lines):
                             valid.pop(i)
                             skip = True
                             break
+                    if not skip and not canvas.is_inside(pos, map(lambda x: x.get_pos(), valid[:3])):
+                        valid.pop(2)
+                        skip = True
                     if not skip:
                         line1 = canvas.get_line(valid[0], valid[1])
                         line2 = canvas.get_line(valid[1], valid[2])
