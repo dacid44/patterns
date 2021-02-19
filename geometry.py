@@ -6,10 +6,11 @@ import shapely.geometry
 
 
 class Canvas:
-    def __init__(self):
+    def __init__(self, color_weight=2.5):
         self.points = []
         self.lines = []
         self.shapes = []
+        self.color_weight = color_weight
 
     def __getitem__(self, item: str):
         if item == 'points':
@@ -21,7 +22,7 @@ class Canvas:
         else:
             raise KeyError(item)
 
-    def __setitem__(self, key: str, value: Union[List['Point'], List['Line'], List['Shape']]):
+    def __setitem__(self, key: str, value: List[Union['Point', 'Line', 'Shape']]):
         if key == 'points':
             self.points = value
         elif key == 'lines':
@@ -175,20 +176,26 @@ class Line:
 
 
 class Shape:
-    def __init__(self, sides: Collection[Line], canvas):
+    def __init__(self, sides: Collection[Line], canvas, color: Collection[int] = None):
         self.sides = frozenset(sides)
         self.canvas = canvas
         self.canvas.add_shape(self)
         for side in self.sides:
             side.add_shape(self)
         self.obj = shapely.geometry.Polygon(map(lambda x: x.get_pos(), self.get_points()))
-        self.color = [randint(0, 255), randint(0, 255), randint(0, 255)]
-        neighbors = self.get_neighbors()
-        for neighbor in neighbors:
+        if color is None:
+            self.color = [randint(0, 255), randint(0, 255), randint(0, 255)]
+            neighbors = self.get_neighbors()
+            for neighbor in neighbors:
+                for i in range(3):
+                    self.color[i] += neighbor.get_color()[i] * canvas.color_weight
             for i in range(3):
-                self.color[i] += neighbor.get_color()[i] * 2.5
-        for i in range(3):
-            self.color[i] = int(self.color[i] / (len(neighbors) * 2.5 + 1))
+                self.color[i] = int(self.color[i] / (len(neighbors) * canvas.color_weight + 1))
+        else:
+            self.color = color
+
+    def set_color(self, color: Collection[int]):
+        self.color = color
 
     def get_sides(self):
         return self.sides

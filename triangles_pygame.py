@@ -4,7 +4,7 @@ from random import randint
 import pygame
 from pygame import gfxdraw
 
-from geometry import *
+from geometry import Canvas, Point, Line, Shape
 
 
 pygame.init()
