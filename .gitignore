@@ -130,3 +130,10 @@ dmypy.json
 
 # PyCharm
 .idea/
+
+# Image exports
+*.svg
+*.png
+
+# Extra stuff
+pyinstaller-build/
