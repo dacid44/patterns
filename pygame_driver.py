@@ -20,7 +20,6 @@ colors = {
     'lines': tuple(int(settings[3].lstrip('#')[i:i+2], 16) for i in (0, 2, 4)),       # default black
     'points': tuple(int(settings[4].lstrip('#')[i:i+2], 16) for i in (0, 2, 4))       # default red
 }
-print(colors)
 first_color = None if settings[5] == '' else tuple(int(settings[5].lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
 color_weight = float(settings[6])  # default 2.5
 first = True
@@ -50,14 +49,24 @@ while True:
             driver.fill_triangle(event.pos)
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
             driver.clear()
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_e:
+            filename = easygui.filesavebox(title='Export to SVG', default='*.svg',
+                                           filetypes=['*.svg'])
+            if filename is not None:
+                import svgwrite
+                dwg = svgwrite.Drawing()
+                for shape in driver['shapes']:
+                    dwg.add(dwg.polygon(shape.get_points(raw=True),
+                                        fill='#{:02x}{:02x}{:02x}'.format(*shape.get_color())))
+                dwg.saveas(filename, pretty=True)
 
     display.fill(colors['background'])
     for shape in driver['shapes']:
-        points = list(map(lambda x: x.get_pos(), shape.get_points()))
+        points = list(shape.get_points(raw=True))
         gfxdraw.aapolygon(display, points, shape.get_color())
         gfxdraw.filled_polygon(display, points, shape.get_color())
     for line in driver['lines']:
-        points = list(map(lambda x: x.get_pos(), line.get_points()))
+        points = list(line.get_points(raw=True))
         pygame.draw.aaline(display, colors['lines'], *points, 1)
     for point in driver['points']:
         gfxdraw.aacircle(display, *point.get_pos(), 3, colors['points'])
