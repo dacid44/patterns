@@ -23,9 +23,12 @@ colors = {
 print(colors)
 first_color = None if settings[5] == '' else tuple(int(settings[5].lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
 color_weight = float(settings[6])  # default 2.5
+first = True
 
 def setup(canvas, types):
+    global first
     types['point'](size[0] // 2 - 50, size[1] // 2, canvas).new_line((size[0] // 2 + 50, size[1] // 2))
+    first = True
 
 driver = Driver(setup, color_weight=color_weight)
 pygame.init()
@@ -38,9 +41,11 @@ while True:
             pygame.quit()
             sys.exit()
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == pygame.BUTTON_LEFT:
-            driver.new_triangle(event.pos, color=first_color)
-            if first_color is not None:
-                first_color = None
+            if first:
+                driver.new_triangle(event.pos, color=first_color)
+                first = False
+            else:
+                driver.new_triangle(event.pos)
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == pygame.BUTTON_RIGHT:
             driver.fill_triangle(event.pos)
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
