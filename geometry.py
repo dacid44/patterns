@@ -3,6 +3,7 @@ from random import randint
 from typing import Union, List, Collection
 
 import shapely.geometry
+import shapely.ops
 
 
 class Canvas:
@@ -112,6 +113,12 @@ class Canvas:
             to_return.append(to_return[-1])
         return to_return
 
+    def get_incomplete_points(self):
+        return set(filter(lambda x: not x.is_complete(), self['points']))
+
+    def get_union_obj(self):
+        return shapely.ops.unary_union(list(map(lambda x: x.obj, self['shapes'])))
+
 
 class Point:
     def __init__(self, x, y, canvas):
@@ -144,11 +151,26 @@ class Point:
         x, y = point.get_pos() if type(point) is Point else point
         return math.hypot(abs(self.x - x), abs(self.y - y))
 
+    def is_complete(self):
+        return all(map(lambda x: len(x.get_shapes()) == 2, self.lines))
+
+    def is_connected(self, other: 'Point', check_complete=True):
+        for line in self.lines:
+            if other in line.get_points() and ((check_complete and len(line.get_shapes()) < 2) or not check_complete):
+                return True
+        return False
+
     def __eq__(self, other: 'Point'):
         return self.get_pos == other.get_pos
 
     def __hash__(self):
         return hash((self.x, self.y))
+
+    def __str__(self):
+        return str(self.get_pos())
+
+    def __repr__(self):
+        return f'{{pos: {str(self)}, id: {id(self)}}}'
 
 
 class Line:

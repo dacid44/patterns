@@ -1,7 +1,10 @@
 import sys
+import random
+from time import sleep
 
 import pygame
 from pygame import gfxdraw
+from shapely.geometry import Point, MultiPoint
 import easygui
 
 from driver import Driver
@@ -10,8 +13,9 @@ from driver import Driver
 settings = easygui.multenterbox(msg='Leave starting color blank for a random starting color.', title='Settings',
                                 fields=['Width', 'Height',
                                         'Background color', 'Line color', 'Point color',
-                                        'Starting color', 'Color weight'],
-                                values=[800, 600, '#FFFFFF', '#000000', '#FF0000', '', 2.5])
+                                        'Starting color', 'Color weight',
+                                        'Random point minimum', 'Random point maximum'],
+                                values=[800, 600, '#FFFFFF', '#000000', '#FF0000', '', 2.5, 75, 125])
 if settings is None:
     sys.exit()
 size = (int(settings[0]), int(settings[1]))
@@ -23,6 +27,7 @@ colors = {
 first_color = None if settings[5] == '' else tuple(int(settings[5].lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
 color_weight = float(settings[6])  # default 2.5
 first = True
+bounds = (int(settings[7]), int(settings[8]))
 
 def setup(canvas, types):
     global first
@@ -59,6 +64,26 @@ while True:
                     dwg.add(dwg.polygon(shape.get_points(raw=True),
                                         fill='#{:02x}{:02x}{:02x}'.format(*shape.get_color())))
                 dwg.saveas(filename, pretty=True)
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_n:
+            incomplete = driver.canvas.get_incomplete_points()
+            p1 = random.choice(list(incomplete))
+            incomplete.remove(p1)
+            p2 = random.choice(list(filter(p1.is_connected, incomplete)))
+            c1 = Point(p1.get_pos()).buffer(random.uniform(*bounds)).boundary
+            c2 = Point(p2.get_pos()).buffer(random.uniform(*bounds)).boundary
+            cand_points = c1.intersection(c2)
+            if type(cand_points) is MultiPoint:
+                cand_points = list(cand_points)
+                # driver.types['point'](int(round(cand_points[0].x)), int(round(cand_points[0].y)), driver.canvas)
+                # driver.types['point'](int(round(cand_points[1].x)), int(round(cand_points[1].y)), driver.canvas)
+                existing = driver.canvas.get_union_obj()
+                print(existing)
+                print(existing.exterior)
+                print(pygame.draw.polygon(display, (0, 0, 255), list(zip(*existing.exterior.xy))))
+                pygame.display.update()
+                sleep(2)
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_d:
+            print(driver.canvas.get_incomplete_points())
 
     display.fill(colors['background'])
     for shape in driver['shapes']:

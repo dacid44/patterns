@@ -137,3 +137,4 @@ dmypy.json
 
 # Extra stuff
 pyinstaller-build/
+*.ipynb
